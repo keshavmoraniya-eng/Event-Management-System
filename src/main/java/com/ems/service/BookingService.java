@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,10 @@ public class BookingService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
 
     @Transactional
     public BookingResponse createBooking(BookingRequest request, User user){
@@ -94,6 +99,64 @@ public class BookingService {
         return convertToResponse(booking);
     }
 
+    @Transactional
+    public void cancelBooking(Long id, User user) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Access denied");
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new BadRequestException("Booking already cancelled");
+        }
+
+        // Update booking status
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        // Restore ticket availability
+        Ticket ticket = booking.getTicket();
+        ticket.setSoldQuantity(ticket.getSoldQuantity() - booking.getQuantity());
+        ticket.setAvailableQuantity(ticket.getAvailableQuantity() + booking.getQuantity());
+        ticketRepository.save(ticket);
+
+        // Update event attendance
+        Event event = booking.getEvent();
+        event.setCurrentAttendees(event.getCurrentAttendees() - booking.getQuantity());
+        eventRepository.save(event);
+
+        bookingRepository.save(booking);
+
+        // Send cancellation notification
+        notificationService.sendBookingCancellation(booking);
+    }
+
+    @Transactional
+    public BookingResponse confirmBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setQrCode(generateQRCode(booking.getBookingReference()));
+
+        Booking confirmedBooking = bookingRepository.save(booking);
+
+        // Send booking confirmation email
+        notificationService.sendBookingConfirmation(confirmedBooking);
+
+        return convertToResponse(confirmedBooking);
+    }
+
+    private String generateBookingReference() {
+        return "BK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private String generateQRCode(String bookingReference) {
+        // QR code generation logic here
+        // For now, return booking reference as placeholder
+        return "QR-" + bookingReference;
+    }
 
 
 
