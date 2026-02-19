@@ -1,6 +1,7 @@
 package com.ems.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -65,6 +67,9 @@ public class User {
     private Set<Role> roles=new HashSet<>();
 
 
-
-
+    public User(@NotBlank @Size(min = 3, max = 20) String username, @NotBlank @Size(max = 50) @Email String email, @Nullable String encode) {
+        this.username=username;
+        this.email=email;
+        this.password=encode;
+    }
 }

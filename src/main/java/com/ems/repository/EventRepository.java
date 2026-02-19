@@ -2,6 +2,7 @@ package com.ems.repository;
 
 import com.ems.model.Event;
 import com.ems.model.EventStatus;
+import com.ems.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event,Long> {
-    List<Event> findByOrganizer(String organizer);
+    List<Event> findByOrganizer(User organizer);
     List<Event> findByStatus(EventStatus status);
     List<Event> findByIsPublishedTrue();
     List<Event> findByCategory(String category);

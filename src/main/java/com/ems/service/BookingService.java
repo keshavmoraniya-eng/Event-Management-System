@@ -88,6 +88,18 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    public List<BookingResponse> getAllBookings(){
+        return bookingRepository.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<BookingResponse> getBookingsByStatus(BookingStatus status){
+        return bookingRepository.findByStatus(status).stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
     public BookingResponse getBookingById(Long id,User user){
         Booking booking=bookingRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Booking not found"));
